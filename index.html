@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ソウル宿比較 10/8〜10/10（v2）</title>
+<style>
+  :root{
+    --ink:#1b1b1b; --muted:#5f5f5f; --faint:#8a8a8a; --line:#d6d6d6; --line2:#ececec;
+    --paper:#fff; --bg:#f3f3f2; --cell:#f4f4f4;
+    --walk:#1f7a45; --walk-bg:#e4f3e9;          /* 徒歩圏・空室あり＝緑 */
+    --na:#8b8b8b; --na-bg:#ebebeb;               /* 予約不可＝グレー */
+    --edit-bg:#fff5c7; --edit-line:#d9bd4a; --edit-ink:#6e5a10; /* 要入力＝黄 */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",system-ui,sans-serif;
+    font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+  a{color:inherit}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px 16px 64px}
+  h1{font-size:22px;line-height:1.3;margin:0 0 8px}
+  h2{font-size:18px;margin:40px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+  h2 .n{display:inline-block;min-width:26px;font-size:14px;color:var(--faint);font-weight:400}
+  h3{font-size:16px;margin:0}
+  p{margin:6px 0}
+  .muted{color:var(--muted)}
+  .small{font-size:13px}
+  ul{margin:4px 0;padding-left:18px}
+  li{margin:2px 0}
+  li.minus{color:#444}
+  li.minus::marker{content:"− "}
+  button{font:inherit;font-size:14px;padding:6px 12px;background:var(--paper);border:1px solid var(--ink);color:var(--ink);cursor:pointer;border-radius:2px}
+  button:hover{background:#eee}
+
+  /* 前提 */
+  .premise{margin:0 0 14px;padding:0;list-style:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .premise li{display:grid;grid-template-columns:4.5em 1fr;gap:8px;padding:4px 0;font-size:14px;border-bottom:1px solid var(--line2);margin:0}
+  .premise li:last-child{border-bottom:0}
+  .premise b{color:var(--muted);font-weight:600;font-size:13px;padding-top:2px}
+
+  /* 決めること */
+  .decide{background:var(--paper);border-left:6px solid var(--ink);padding:14px 16px;margin:0 0 8px}
+  .decide h2{margin:0 0 10px;border:0;padding:0;font-size:18px}
+  .decide .now{font-size:16px;font-weight:600;margin:0 0 10px;line-height:1.5}
+  .steps{margin:0;padding:0;list-style:none;counter-reset:st}
+  .steps li{counter-increment:st;display:grid;grid-template-columns:2em 1fr;gap:6px;padding:8px 0;border-top:1px solid var(--line2);margin:0}
+  .steps li::before{content:counter(st);font-weight:700;font-size:18px;line-height:1.2}
+  .steps li b{display:block}
+  .steps a{text-decoration:underline}
+
+  /* エリア */
+  .areas{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+  .area{background:var(--paper);padding:12px 14px}
+  .area h3{font-size:16px}
+  .area .tag{font-size:13px;color:var(--muted);margin:0 0 6px}
+  .area .night{font-size:14px;margin:0 0 8px;padding:6px 8px;background:var(--cell);border-left:3px solid var(--ink)}
+  .area .night b{font-weight:600}
+  .area ul{font-size:14px}
+
+  /* 表共通 */
+  .scroll{overflow-x:auto;background:var(--paper);border:1px solid var(--line)}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line2);padding:7px 8px;text-align:center;vertical-align:middle}
+  th{background:var(--cell);font-weight:600;font-size:13px}
+  tbody th{text-align:left}
+  .mat th,.mat td{white-space:nowrap;padding:8px 4px}
+  .mat td.self{color:var(--faint);background:var(--cell)}
+  .mat td{font-variant-numeric:tabular-nums;font-size:14px}
+
+  /* バッジ */
+  .b{display:inline-block;font-size:13px;line-height:1.3;padding:3px 8px;border:1px solid var(--line);background:var(--paper);border-radius:2px;margin:0 6px 4px 0;white-space:nowrap}
+  .b.walk{border-color:var(--walk);color:var(--walk);background:var(--walk-bg);font-weight:600}
+  .b.far{color:var(--muted)}
+  .b.chk{border-style:dashed;color:var(--muted)}
+  .b.fit-ok{font-weight:600}
+  .status{display:inline-block;font-size:13px;font-weight:600;padding:2px 8px;border-radius:2px;margin-bottom:6px}
+  .status.ok{background:var(--walk);color:#fff}
+  .status.na{background:var(--na-bg);color:#555}
+
+  /* 入力 */
+  .edit{display:block;width:100%;min-width:0;font:inherit;font-size:14px;padding:7px 8px;background:var(--edit-bg);border:1px solid var(--edit-line);color:var(--ink);border-radius:2px}
+  .edit::placeholder{color:var(--edit-ink);opacity:.8}
+  .edit:focus{outline:2px solid var(--edit-line);outline-offset:1px}
+  .fld{margin:8px 0 0}
+  .fld label{display:block;font-size:13px;color:var(--muted);margin-bottom:2px}
+  td .edit{min-width:110px}
+
+  /* 宿：ツールバー */
+  .bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:13px;color:var(--muted)}
+  .bar .sp{flex:1}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:0 0 12px}
+  .legend i{display:inline-block;width:13px;height:13px;vertical-align:-2px;margin-right:5px;border:1px solid var(--line)}
+  .legend .lw{background:var(--walk-bg);border-color:var(--walk)}
+  .legend .ln{background:var(--na-bg)}
+  .legend .le{background:var(--edit-bg);border-color:var(--edit-line)}
+
+  /* 宿：カード */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .stay{background:var(--paper);border:1px solid var(--line);padding:12px 14px}
+  .stay.pick{border:2px solid var(--ink)}
+  .stay.na{background:var(--na-bg);color:#555}
+  .stay.na img{filter:grayscale(1);opacity:.7}
+  .stay h3 a{text-decoration:none;border-bottom:1px solid #999}
+  .stay .top{display:grid;grid-template-columns:96px 1fr;gap:10px;margin:6px 0 8px}
+  .stay .top.nophoto{grid-template-columns:1fr}
+  .stay img{width:96px;height:72px;object-fit:cover;background:#ddd;display:block}
+  .stay .rate{font-size:13px;margin-bottom:4px}
+  .stay .spec{font-size:13px;color:var(--muted);line-height:1.5}
+  .stay .badges{margin:0 0 6px}
+  .times{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line2);border:1px solid var(--line2);margin:8px 0;font-size:13px}
+  .times div{background:var(--paper);text-align:center;padding:4px 0;line-height:1.3}
+  .times div span{display:block;font-size:14px;font-variant-numeric:tabular-nums}
+  .times div.w span{color:var(--walk);font-weight:600}
+  .stay.na .times div{background:#f3f3f3}
+  .stay ul.pros{font-size:13px;margin:8px 0 0}
+  .stay .cap{font-size:13px;color:var(--muted);margin:2px 0 0}
+
+  /* 宿：表 */
+  .stays td{white-space:normal;text-align:left;vertical-align:top}
+  .stays td.c{text-align:center;white-space:nowrap}
+  .stays img{width:110px;height:80px;object-fit:cover;display:block;background:#ddd;margin-bottom:4px}
+  .stays .name{min-width:230px;font-weight:600}
+  .stays .name a{text-decoration:none;border-bottom:1px solid #999}
+  .stays .name small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
+  .stays td.num{font-variant-numeric:tabular-nums;text-align:center;white-space:nowrap}
+  .stays td.num.w{color:var(--walk);font-weight:700;background:var(--walk-bg)}
+  .stays td.pros{font-size:13px;min-width:240px}
+  .stays td.pros ul{margin:0;padding-left:16px}
+  .stays tr.na td{background:var(--na-bg);color:#555}
+  .stays tr.na img{filter:grayscale(1);opacity:.7}
+  .stays tr.pick td{border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}
+  .stays tr.pick td:first-child{border-left:2px solid var(--ink)}
+  .stays tr.pick td:last-child{border-right:2px solid var(--ink)}
+  .stays .fit{font-size:13px;min-width:170px}
+  .stays .b{white-space:normal}
+  .stays th{white-space:nowrap}
+
+  /* 予約不可の折りたたみ */
+  .na-wrap{display:none}
+  .show-na .na-wrap{display:contents}
+  .show-na tbody.na-wrap{display:table-row-group}
+  .na-toggle{margin:12px 0 0;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+
+  /* 表示切替 */
+  @media (max-width:899px){ [data-view="auto"] .tbl{display:none} }
+  @media (min-width:900px){ [data-view="auto"] .cards{display:none} }
+  [data-view="cards"] .tbl{display:none}
+  [data-view="table"] .cards{display:none}
+
+  /* 備考 */
+  .notes{background:var(--paper);border:1px solid var(--line);padding:12px 16px;font-size:14px}
+  .notes li{margin:4px 0}
+
+  @media (max-width:640px){
+    .wrap{padding:12px 16px 48px}
+    h1{font-size:20px}
+    h2{font-size:17px;margin-top:32px}
+    .cards{grid-template-columns:1fr}
+    .area{padding:10px 12px}
+  }
+  @media print{
+    body{background:#fff;font-size:12px}
+    .wrap{padding:0;max-width:none}
+    .tbl,.bar,.na-toggle,button{display:none!important}
+    .cards{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+    .na-wrap{display:contents!important}
+    tbody.na-wrap{display:table-row-group!important}
+    .stay,.area,.decide,.notes{break-inside:avoid}
+    .edit{border:1px solid #999;background:#fff}
+    a{text-decoration:none}
+    h2{margin-top:20px}
+  }
+</style>
+</head>
+<body data-view="auto">
+<div class="wrap">
+
+  <h1>ソウル宿 比較資料　10/8（木）〜10/10（土）・5名・Airbnb</h1>
+  <ul class="premise">
+    <li><b>日程</b><span>10/8（木）仁川空港 11:25着 → 10/10（土）仁川空港 15:35発（13時前に空港着が目安）。2泊</span></li>
+    <li><b>人数・宿</b><span>5名。Airbnbの一軒家・アパートを1件借りる想定</span></li>
+    <li><b>目的</b><span>初日昼に仁川パラダイスシティ（カジノ・パスポート必須）、夜はソウルの繁華街で深夜まで。遅い時間に徒歩で帰れる宿がよく、第一希望エリアは東大門</span></li>
+  </ul>
+
+  <section class="decide" id="decide">
+    <h2>決めること（2ステップ）</h2>
+    <p class="now" id="now-line"></p>
+    <ol class="steps" id="steps"></ol>
+    <p class="small muted" style="margin:10px 0 0">10/9（金）はハングルの日（韓国の祝日）で混雑見込み。決まったら早めに予約。</p>
+  </section>
+
+  <h2><span class="n">1</span>エリア比較：どこに泊まるか</h2>
+  <p class="small muted">夜遊びの向き不向きを1行で。詳しい特徴はその下。</p>
+  <div class="areas" id="areas"></div>
+  <p class="small muted" id="area-note"></p>
+
+  <h3 style="margin:20px 0 8px">エリア間の移動時間（地下鉄の目安・分）</h3>
+  <div class="scroll"><table class="mat" id="matrix"></table></div>
+  <p class="small muted" id="matrix-note"></p>
+
+  <h2><span class="n">2</span>宿比較：どの宿にするか</h2>
+  <div class="legend">
+    <span><i class="lw"></i>徒歩圏・空室あり</span>
+    <span><i class="ln"></i>10/8〜10 予約不可</span>
+    <span><i class="le"></i>黄色は各自のAirbnb画面を見て入力（この端末に保存されます）</span>
+  </div>
+  <div class="bar">
+    <span>表示：</span>
+    <button type="button" data-setview="auto">自動</button>
+    <button type="button" data-setview="cards">カード</button>
+    <button type="button" data-setview="table">表</button>
+    <span class="sp"></span>
+    <button type="button" id="reset">入力をリセット</button>
+  </div>
+
+  <h3 style="margin:16px 0 8px">元の候補 7件（お気に入り「東大門, 韓国 2026」）</h3>
+  <p class="small muted">空室があるのは④のみ。他6件は予約不可のためグレーで折りたたんでいます。</p>
+  <div id="stays"></div>
+
+  <h3 style="margin:28px 0 8px" id="cand-title"></h3>
+  <p class="small muted" id="cand-note"></p>
+  <div id="candidates"></div>
+  <p class="small muted" id="stays-note"></p>
+
+  <h2><span class="n">3</span>備考</h2>
+  <div class="notes"><ul id="notes"></ul></div>
+
+</div>
+
+<script>
+/* ===== データ（正本：seoul_stay_compare.html から抽出。更新はここだけ直す） ===== */
+const DATA = {
+  asOf: "2026/9/28",
+  dates: "10/8〜10",
+  now: "現時点で10/8〜10の空室が確認できているのは④弘大（¥73,518）だけ。東大門にこだわるなら、A〜Gの空室確認が先。",
+  decide: [
+    { t: "まず選ぶ", d: "空室が確実な④弘大（¥73,518）で決めるか、東大門にこだわって追加候補A〜Gの空室を確認するか" },
+    { t: "東大門なら", d: "A〜Gのリンクを開いて空室と料金を黄色セルに記入し、ベッド数・バスルーム数を見て1件に絞る" },
+    { t: "決まったら予約", d: "10/9はハングルの日（祝日）で混雑見込み。早めに" }
+  ],
+
+  areas: [
+    { key:"ddm", name:"東大門（トンデムン）", tag:"深夜ショッピングの街／地下鉄2・4・5号線",
+      night:"向く：深夜の買い物と深夜メシ。バー・クラブは少なめ",
+      pts:[ "卸売ファッションビルが20時〜朝5時営業", "DDP周辺の屋台・夜市が深夜2〜3時まで", "タッカンマリ横丁など深夜1時まで営業の食堂多数", "バー・クラブは少なめ。「買い物と深夜メシ」の夜" ],
+      minus:[ "注意：卸売ビルは金・土休みが多い（10/9金は休業の可能性大）" ] },
+    { key:"mdg", name:"明洞（ミョンドン）", tag:"観光客向けの王道／地下鉄4号線",
+      night:"不向き：屋台は23時頃、店も0時前に閉まり夜は早い",
+      pts:[ "コスメ・屋台・食べ歩き。観光の拠点として便利", "屋台は23時頃、店も0時前に閉まり夜は早い", "ソウル駅（空港鉄道）まで地下鉄2駅で空港アクセス良好", "東大門まで4号線で約10分" ], minus:[] },
+    { key:"hdae", name:"弘大（ホンデ）", tag:"大学街・若者の夜遊び／地下鉄2号線・空港鉄道",
+      night:"向く：クラブ・バー・カラオケ・路上ライブが朝まで",
+      pts:[ "クラブ・バー・カラオケ・路上ライブが朝まで", "「飲んで騒ぐ夜」ならソウルで一番", "空港鉄道の駅があり、空港から乗り換えなし", "市内西端。東大門・江南へは30分以上" ], minus:[] },
+    { key:"gng", name:"江南（カンナム）", tag:"漢江の南側・新興ビジネス街／地下鉄2号線",
+      night:"向く（高め）：大型クラブ・ルーフトップバー。ドレスコードのある店も",
+      pts:[ "大型クラブ・ルーフトップバー・高級焼肉", "価格は高め。ドレスコードのある店も", "江北（明洞・東大門）へは川を渡って30分以上" ], minus:[] },
+    { key:"itw", name:"梨泰院（イテウォン）", tag:"外国人街／地下鉄6号線",
+      night:"向く：外国人客中心のバー・クラブ",
+      pts:[ "多国籍料理・外国人客中心のバー・クラブ", "明洞と江南の中間、ソウルタワーの南麓", "6号線で東大門方面・弘大方面どちらにも行きやすい" ], minus:[] }
+  ],
+  areaNote: "位置関係のイメージ：漢江を境に北が「江北」（明洞・東大門＝旧市街、弘大＝若者街）、南が「江南」（新宿・六本木的な新興街）。",
+
+  matrix: {
+    cols: ["東大門","明洞","弘大","江南","梨泰院","仁川空港"],
+    rows: [
+      { from:"東大門", t:[null,10,30,35,20,70] },
+      { from:"明洞",   t:[10,null,25,30,15,60] },
+      { from:"弘大",   t:[30,25,null,40,25,50] },
+      { from:"江南",   t:[35,30,40,null,30,75] },
+      { from:"梨泰院", t:[20,15,25,30,null,70] }
+    ],
+    note: "駅から駅までの目安（乗り換え・待ち時間込み）。深夜はタクシー利用が現実的で、東大門⇔弘大・江南は約20〜25分・2〜3千円程度。地下鉄終電は0時前後。"
+  },
+
+  timeCols: ["東大門","明洞","弘大","江南","梨泰院","空港"],
+
+  /* beds/baths は spec 文から読み取った数値（判定用）。null＝掲載情報になし */
+  stays: [
+    { no:"①", id:"1774334242268070723", name:"Maison Reve（中区・多山路）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1774334242268070723/original/9d7c9c70-23ca-4b94-81ed-c58f8d1c3a4a.jpeg?im_w=720",
+      rating:"★5.0（5件）", spec:"寝室2／ベッド3（クイーン3）／バス1／最大6名", station:"青丘駅 徒歩5分、東大門歴史文化公園駅 徒歩8分",
+      beds:3, baths:1, near:"東大門", ddmLabel:"東大門歴史文化公園駅まで",
+      times:["徒歩8分","15","30","30","15","70"], best:0,
+      pros:[ "東大門夜市まで徒歩3分。夜遊び拠点として最強の立地", "2026年全面リフォーム、ホテル寝具", "ベッド3台なので5名は相部屋前提" ],
+      minus:[ "3階・エレベーターなし、レビュー5件と少ない" ] },
+    { no:"②", id:"1741662416966975704", name:"韓屋の庭付き一軒家（鍾路区・昌信洞）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1741662416966975704/original/69158141-38f4-4fcb-85f6-5fd7961c0f32.png?im_w=720",
+      rating:"★5.0（4件）", spec:"寝室3／ベッド3／バス3／最大9名", station:"昌信駅（6号線）徒歩20秒",
+      beds:3, baths:3, near:"東大門", ddmLabel:"東大門まで",
+      times:["徒歩10〜15分","20","30","40","20","75"], best:0,
+      pros:[ "各寝室にバスルーム付き（3つ）。5名でも朝の渋滞なし", "マナータイムなし、庭・テラス貸切。深夜帰宅でも気兼ねなし", "DDPまで徒歩圏、6号線で梨泰院・弘大へ乗り換えなし" ],
+      minus:[ "レビュー4件と少ない、駅周辺はやや下町" ] },
+    { no:"③", id:"1250822382622644154", name:"イテウォン・マンション（龍山区）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/miso/Hosting-1250822382622644154/original/0f4942de-79db-4ed6-ac88-53a8e9beff58.jpeg?im_w=720",
+      rating:"★4.8（91件）", spec:"寝室2／ベッド5＋ソファベッド／バス1／最大7名", station:"梨泰院駅 徒歩3〜4分",
+      beds:5, baths:1, near:"梨泰院", ddmLabel:"東大門まで",
+      times:["20","15","25","30","徒歩3分","70"], best:4,
+      pros:[ "玄関を出て1分で梨泰院の繁華街。バー・多国籍料理", "一戸建てで騒音の心配なし、マッサージチェア", "レビュー91件で安定感あり" ],
+      minus:[ "基準2名、超過1名15,000ウォン（5名で+45,000ウォン/泊）" ] },
+    { no:"④", id:"1499107618038272080", name:"弘大入口駅 屋上付き一軒家（麻浦区）", avail:true,
+      img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1499107618038272080/original/f66a5b7b-ceeb-4c53-9b35-4a1fa4c9bfa0.jpeg?im_w=720",
+      rating:"★4.88（59件）", spec:"寝室3／ベッド6（クイーン5＋S1）／バス1.5／最大11名", station:"弘大入口駅 徒歩7分",
+      beds:6, baths:1.5, near:"弘大", ddmLabel:"東大門まで",
+      times:["30","25","徒歩7分","40","25","50"], best:2,
+      priceDefault:"¥73,518", priceCap:"1人約14,700円",
+      pros:[ "弘大の夜遊びエリアに徒歩圏。クラブ・バー派向き", "ベッド6台・10人用テーブル・屋上テラス・マッサージチェア", "空港鉄道で空港へ乗り換えなし" ],
+      minus:[ "東大門・江南へは30分以上。屋上BBQ禁止" ] },
+    { no:"⑤", id:"1639150831309642693", name:"Haru Stay（麻浦区・上岩洞DMC）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1639150831309642693/original/013176bd-3eb5-4880-89da-007e463b66ec.png?im_w=720",
+      rating:"★4.77（13件）", spec:"寝室2＋ロフト／クイーン3／バス1／最大8名", station:"DMC駅（空港鉄道・6号線）徒歩3分",
+      beds:3, baths:1, near:"弘大（1駅）", ddmLabel:"東大門まで",
+      times:["25","20","5","35","30","45"], best:-1,
+      pros:[ "弘大まで1駅、空港鉄道で空港45〜55分と最短", "レトロゲーム機・ボードゲームの屋根裏、バルコニー" ],
+      minus:[ "ベッド3台で5名は相部屋。マナータイム21時〜（深夜帰宅は静かに）", "1〜2階が飲食店、3階まで階段。周辺はオフィス街で夜は静か" ] },
+    { no:"⑥", id:"1135886801878837785", name:"川沿いの家（麻浦区・望遠洞）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/miso/Hosting-1135886801878837785/original/c46de10e-cbe7-4212-bd97-617efece4892.jpeg?im_w=720",
+      rating:"★4.95（62件）", spec:"寝室2／ベッド3／バス1／最大8名／4.5階建て", station:"麻浦区庁駅（6号線）",
+      beds:3, baths:1, near:"弘大（徒歩15分）", ddmLabel:"東大門まで",
+      times:["40","35","15","50","30","60"], best:-1,
+      pros:[ "アート系インテリアの一軒家、スーパーホスト・高評価", "望理団通り（おしゃれ飲食街）・望遠市場が近い" ],
+      minus:[ "東大門からは最も遠い（地下鉄40分）。夜遊び拠点には不向き", "ベッド3台で5名は相部屋" ] },
+    { no:"⑦", id:"1680077200743195179", name:"Seoul Cozy Stay（冠岳区・新林）", avail:false,
+      img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1680077200743195179/original/e2805222-360e-4306-8429-16d550e0ce4d.png?im_w=720",
+      rating:"★5.0（10件）", spec:"寝室4／ベッド5／バス1／92㎡／最大7名", station:"新林駅（2号線）徒歩7分",
+      beds:5, baths:1, near:"江南（17分）", ddmLabel:"東大門まで",
+      times:["35","25","20","17","35","80"], best:-1,
+      pros:[ "92㎡・4部屋で広さは最大。無料アーリーチェックイン", "2号線で江南・弘大へ乗り換えなし" ],
+      minus:[ "閑静な住宅街で周辺に繁華街なし。どのエリアも20分以上", "静粛時間22時〜、パーティー目的NG。5名は3部屋まで" ] }
+  ],
+  staysNote: "移動時間は最寄り駅から各エリア中心駅までの地下鉄目安（分・乗り換え込み）。料金はAirbnbのログイン画面でのみ表示されるため未記入。人数追加料金（③など）は合計に含めて比較すること。",
+
+  candTitle: "追加候補 A〜G：東大門徒歩圏（10/8〜10の空室・料金は各自Airbnbで要確認）",
+  candNote: "Airbnbの東大門周辺リストから、5名で泊まれそうな一軒家・アパートを抜粋。空室と料金はログイン画面でしか確認できないため、リンクを開いて黄色セルに記入してください。",
+  candDistLabel: "東大門歴史文化公園駅／DDPまで",
+  candidates: [
+    { no:"A", id:"1607715435564032120", name:"東大門駅3分の一軒家（鍾路区）", spec:"最大7名（基準6名）／寝室2／ベッド3／バス1.5／エレベーター有", spec2:"DDP・広蔵市場・タッカンマリ横丁が近い、玄関前にバス停",
+      rating:"★5.0（54件）", dist:"徒歩10分程度", beds:3, baths:1.5,
+      memo:[ "バスルーム1.5で5名でも回しやすい", "ジャグジー付きとの掲載あり" ] },
+    { no:"B", id:"1460838765860189584", name:"DDP徒歩3分・大きなリビング（中区）", spec:"最大7名／65インチTV／アパート", spec2:"",
+      rating:"★5.0（41件）", dist:"徒歩3分", beds:null, baths:null,
+      memo:[ "夜遊び拠点としては最も近い", "寝室・ベッド数はリンク先で要確認" ] },
+    { no:"C", id:"1344207993881509342", name:"DDP駅5分・クイーンベッド3台の一軒家（中区）", spec:"クイーンベッド3台／浄水器／エアコン", spec2:"",
+      rating:"★4.91（114件）", dist:"徒歩5分", beds:3, baths:null,
+      memo:[ "レビュー114件で安定", "クイーン3台なら5名は2+2+1で収まる" ] },
+    { no:"D", id:"1294718324466695909", name:"DDP徒歩4分・3部屋3ベッド（中区）", spec:"寝室3／ベッド3／アパート", spec2:"",
+      rating:"★4.96（78件）", dist:"徒歩4分", beds:3, baths:null,
+      memo:[ "3部屋に分かれるのでプライバシー確保しやすい" ] },
+    { no:"E", id:"1522451194497231726", name:"Sunsun Mansion（中区）", spec:"東大門歴史文化公園駅 徒歩1分／エレベーター／駐車場", spec2:"",
+      rating:"★4.92（50件）", dist:"徒歩1分", beds:null, baths:null,
+      memo:[ "駅直近でエレベーター有。深夜帰宅が楽", "定員はリンク先で要確認" ] },
+    { no:"F", id:"34245869", name:"leejae 3ベッドルーム（中区）", spec:"寝室3／スーパーホスト", spec2:"",
+      rating:"★4.82（131件）", dist:"要確認", beds:null, baths:null,
+      memo:[ "レビュー数が多く実績あり", "所在地・定員はリンク先で要確認" ] },
+    { no:"G", id:"815915581934616483", name:"PARK Poru モダン韓屋／DDP（中区）", spec:"韓屋スタイルの一軒家", spec2:"",
+      rating:"★4.97（73件）", dist:"要確認", beds:null, baths:null,
+      memo:[ "雰囲気重視ならここ", "定員はリンク先で要確認" ] }
+  ],
+
+  notes: [
+    "Airbnbの物件ページは非ログインだと10/8〜10の空室と料金が見えないため、黄色セルは各自がアプリで確認して手入力する運用です。入力はこの端末のブラウザ（localStorage）に保存され、再読み込み後も残ります。他の人には共有されません。",
+    "移動時間はすべて地下鉄の目安（分・乗り換え込み）。深夜はタクシーが現実的で、東大門⇔弘大・江南は約20〜25分・2〜3千円程度。地下鉄終電は0時前後。",
+    "宿選びの基準：東大門歴史文化公園駅から徒歩10分（約700m）以内、5名分のベッド、できればバスルーム複数。",
+    "「要確認」は掲載情報からは読み取れなかった項目。推測で埋めていません。",
+    "元の7件の空室状況（④のみ空室あり）と④の料金¥73,518は2026/9/28時点の表示。予約前に再確認してください。"
+  ]
+};
+
+/* ===== 状態（localStorage） ===== */
+const LS_KEY = "seoul_stay_v2";
+let state = { inputs:{}, view:"auto", showNa:false };
+try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && typeof s === "object") state = Object.assign(state, s); } catch(e) {}
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {} }
+
+/* ===== ヘルパー ===== */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const roomUrl = id => `https://www.airbnb.jp/rooms/${id}`;
+const isWalk = t => /^徒歩/.test(t);
+const fmtTime = t => isWalk(t) ? t : `${t}分`;
+
+function fitBadge(beds, baths){
+  let cls = "b", txt;
+  if (beds == null) { cls += " chk"; txt = "ベッド数 要確認"; }
+  else if (beds >= 5) { cls += " fit-ok"; txt = `ベッド${beds}台：5名分あり`; }
+  else { txt = `ベッド${beds}台：5名は相部屋`; }
+  const bath = baths == null ? "バス数 要確認" : `バス${baths}`;
+  return `<span class="${cls}">${txt}／${bath}</span>`;
+}
+function ddmBadge(s){
+  const t = s.times[0];
+  const cls = isWalk(t) ? "b walk" : "b far";
+  return `<span class="${cls}">${esc(s.ddmLabel)} ${esc(fmtTime(t))}</span>`;
+}
+function nearBadge(s){
+  if (s.best < 0) return `<span class="b far">最寄りエリア：${esc(s.near)}</span>`;
+  return `<span class="b walk">${esc(s.near)}まで${esc(s.times[s.best])}</span>`;
+}
+function inputHtml(key, ph, def, cap){
+  const v = state.inputs[key] != null ? state.inputs[key] : (def || "");
+  return `<input class="edit" data-key="${key}" value="${esc(v)}" placeholder="${esc(ph)}" autocomplete="off">` + (cap ? `<div class="cap">${esc(cap)}</div>` : "");
+}
+const list = (pros, minus) => `<ul class="pros">${pros.map(p=>`<li>${esc(p)}</li>`).join("")}${minus.map(p=>`<li class="minus">${esc(p)}</li>`).join("")}</ul>`;
+const status = s => s.avail ? `<span class="status ok">${DATA.dates} 空室あり</span>` : `<span class="status na">${DATA.dates} 予約不可</span>`;
+
+/* ===== 決めること ===== */
+document.getElementById("now-line").textContent = DATA.now;
+document.getElementById("steps").innerHTML = DATA.decide.map(d => `<li><span><b>${esc(d.t)}</b>${esc(d.d)}</span></li>`).join("");
+
+/* ===== エリア ===== */
+document.getElementById("areas").innerHTML = DATA.areas.map(a => `
+  <div class="area">
+    <h3>${esc(a.name)}</h3>
+    <p class="tag">${esc(a.tag)}</p>
+    <p class="night"><b>夜遊び</b>　${esc(a.night)}</p>
+    <ul>${a.pts.map(p=>`<li>${esc(p)}</li>`).join("")}${a.minus.map(p=>`<li class="minus">${esc(p)}</li>`).join("")}</ul>
+  </div>`).join("");
+document.getElementById("area-note").textContent = DATA.areaNote;
+
+document.getElementById("matrix").innerHTML =
+  `<thead><tr><th>出発＼到着</th>${DATA.matrix.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead>` +
+  `<tbody>${DATA.matrix.rows.map(r=>`<tr><th>${esc(r.from)}</th>${r.t.map(v=> v==null ? `<td class="self">—</td>` : `<td>${v}</td>`).join("")}</tr>`).join("")}</tbody>`;
+document.getElementById("matrix-note").textContent = DATA.matrix.note;
+
+/* ===== 元の7件 ===== */
+function stayCard(s){
+  const cls = ["stay", s.avail ? "pick" : "na"].join(" ");
+  return `<article class="${cls}">
+    ${status(s)}
+    <h3><a href="${roomUrl(s.id)}" target="_blank" rel="noopener">${esc(s.no)} ${esc(s.name)}</a></h3>
+    <div class="top">
+      <img src="${esc(s.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('nophoto');this.remove()">
+      <div>
+        <div class="rate">${esc(s.rating)}</div>
+        <div class="spec">${esc(s.spec)}<br>最寄：${esc(s.station)}</div>
+      </div>
+    </div>
+    <div class="badges">${ddmBadge(s)}${s.best !== 0 ? nearBadge(s) : ""}${fitBadge(s.beds, s.baths)}</div>
+    <div class="times">${DATA.timeCols.map((c,i)=>`<div class="${isWalk(s.times[i])?"w":""}">${esc(c)}<span>${esc(isWalk(s.times[i])?s.times[i].replace("徒歩",""):s.times[i])}</span></div>`).join("")}</div>
+    <div class="fld"><label>2泊合計料金（5名）</label>${inputHtml("price:"+s.id, "各自のAirbnb画面で確認して入力", s.priceDefault, s.priceCap ? s.priceCap + "（" + DATA.asOf + "時点）" : "")}</div>
+    ${list(s.pros, s.minus)}
+  </article>`;
+}
+function stayRow(s){
+  return `<tr class="${s.avail ? "pick" : "na"}">
+    <td class="c"><img src="${esc(s.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"><span class="small">${esc(s.rating)}</span></td>
+    <td class="name">${status(s)}<br><a href="${roomUrl(s.id)}" target="_blank" rel="noopener">${esc(s.no)} ${esc(s.name)}</a><small>${esc(s.spec)}<br>最寄：${esc(s.station)}</small><div class="badges" style="margin-top:6px;font-weight:400">${ddmBadge(s)}${fitBadge(s.beds, s.baths)}</div></td>
+    <td>${inputHtml("price:"+s.id, "要入力", s.priceDefault, s.priceCap ? s.priceCap : "")}</td>
+    ${s.times.map((t,i)=>`<td class="num ${isWalk(t)?"w":""}">${esc(t)}</td>`).join("")}
+    <td class="pros">${list(s.pros, s.minus)}</td>
+  </tr>`;
+}
+function renderStays(){
+  const avail = DATA.stays.filter(s=>s.avail), na = DATA.stays.filter(s=>!s.avail);
+  const toggle = `<div class="na-toggle"><button type="button" data-toggle-na>${state.showNa ? "予約不可の" + na.length + "件を隠す" : "予約不可の" + na.length + "件（①②③⑤⑥⑦）を表示"}</button><span>参考：立地・設備の比較用</span></div>`;
+  const wrapCls = state.showNa ? "show-na" : "";
+  document.getElementById("stays").innerHTML = `
+    <div class="${wrapCls}">
+      <div class="cards">${avail.map(stayCard).join("")}<div class="na-wrap">${na.map(stayCard).join("")}</div></div>
+      <div class="tbl scroll"><table class="stays">
+        <thead><tr><th>写真・評価</th><th>宿名／条件／5名分のベッド・バス</th><th>2泊合計料金<br>（5名）</th>${DATA.timeCols.map(c=>`<th>${esc(c)}</th>`).join("")}<th>特徴・雰囲気</th></tr></thead>
+        <tbody>${avail.map(stayRow).join("")}<tbody class="na-wrap">${na.map(stayRow).join("")}</tbody>
+      </table></div>
+      ${toggle}
+    </div>`;
+}
+
+/* ===== 追加候補 A〜G ===== */
+function candCard(c){
+  const dcls = isWalk(c.dist) ? "b walk" : "b chk";
+  return `<article class="stay">
+    <h3><a href="${roomUrl(c.id)}" target="_blank" rel="noopener">${esc(c.no)}. ${esc(c.name)}</a></h3>
+    <div class="top nophoto"><div>
+      <div class="rate">${esc(c.rating)}</div>
+      <div class="spec">${esc(c.spec)}${c.spec2 ? "<br>" + esc(c.spec2) : ""}</div>
+    </div></div>
+    <div class="badges"><span class="${dcls}">${esc(DATA.candDistLabel)} ${esc(c.dist)}</span>${fitBadge(c.beds, c.baths)}</div>
+    <div class="fld"><label>${DATA.dates} 空室</label>${inputHtml("vac:"+c.id, "あり／なし を入力")}</div>
+    <div class="fld"><label>2泊合計料金（5名）</label>${inputHtml("price:"+c.id, "各自のAirbnb画面で確認して入力")}</div>
+    ${list(c.memo, [])}
+  </article>`;
+}
+function candRow(c){
+  const dcls = isWalk(c.dist) ? "num w" : "num";
+  return `<tr>
+    <td class="name"><a href="${roomUrl(c.id)}" target="_blank" rel="noopener">${esc(c.no)}. ${esc(c.name)}</a><small>${esc(c.spec)}${c.spec2 ? "<br>" + esc(c.spec2) : ""}</small></td>
+    <td class="c">${esc(c.rating)}</td>
+    <td class="${dcls}">${esc(c.dist)}</td>
+    <td class="fit">${fitBadge(c.beds, c.baths)}</td>
+    <td>${inputHtml("vac:"+c.id, "要入力")}</td>
+    <td>${inputHtml("price:"+c.id, "要入力")}</td>
+    <td class="pros">${list(c.memo, [])}</td>
+  </tr>`;
+}
+function renderCands(){
+  document.getElementById("cand-title").textContent = DATA.candTitle;
+  document.getElementById("cand-note").textContent = DATA.candNote;
+  document.getElementById("candidates").innerHTML = `
+    <div class="cards">${DATA.candidates.map(candCard).join("")}</div>
+    <div class="tbl scroll"><table class="stays">
+      <thead><tr><th>宿名／条件（掲載情報より）</th><th>評価</th><th>${DATA.candDistLabel.replace("／","<br>／")}</th><th>5名分の<br>ベッド／バス</th><th>${DATA.dates}<br>空室</th><th>2泊合計料金<br>（5名）</th><th>メモ</th></tr></thead>
+      <tbody>${DATA.candidates.map(candRow).join("")}</tbody>
+    </table></div>`;
+}
+document.getElementById("stays-note").textContent = DATA.staysNote;
+document.getElementById("notes").innerHTML = DATA.notes.map(n=>`<li>${esc(n)}</li>`).join("");
+
+/* ===== 描画とイベント ===== */
+function renderAll(){ renderStays(); renderCands(); applyView(); }
+function applyView(){
+  document.body.dataset.view = state.view;
+  document.querySelectorAll("[data-setview]").forEach(b => b.style.fontWeight = (b.dataset.setview === state.view ? "700" : "400"));
+}
+renderAll();
+
+document.addEventListener("input", e => {
+  const el = e.target;
+  if (!el.matches || !el.matches(".edit[data-key]")) return;
+  state.inputs[el.dataset.key] = el.value;
+  save();
+  document.querySelectorAll(`.edit[data-key="${el.dataset.key}"]`).forEach(o => { if (o !== el) o.value = el.value; });
+});
+document.addEventListener("click", e => {
+  const v = e.target.closest("[data-setview]");
+  if (v) { state.view = v.dataset.setview; save(); applyView(); return; }
+  if (e.target.closest("[data-toggle-na]")) { state.showNa = !state.showNa; save(); renderStays(); return; }
+  if (e.target.closest("#reset")) {
+    if (!confirm("黄色セルの入力をすべて消して初期状態に戻します。よろしいですか？")) return;
+    state.inputs = {}; save(); renderAll();
+  }
+});
+</script>
+</body>
+</html>
