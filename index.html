@@ -67,6 +67,16 @@
   .mat td.self{color:var(--faint);background:var(--cell)}
   .mat td{font-variant-numeric:tabular-nums;font-size:14px}
 
+  /* 2件比較表 */
+  .h2h th,.h2h td{text-align:left;vertical-align:top;white-space:normal;font-size:14px;padding:8px 10px}
+  .h2h thead th{font-size:14px;line-height:1.4}
+  .h2h thead th a{text-decoration:none;border-bottom:1px solid #999}
+  .h2h tbody th{width:7.5em;color:var(--muted);font-weight:600;font-size:13px}
+  .h2h td.w{color:var(--walk);font-weight:600;background:var(--walk-bg)}
+  .h2h tbody tr:first-child td{font-size:18px;font-weight:700}
+  .cards.two{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  @media (max-width:640px){ .h2h th,.h2h td{padding:7px 6px;font-size:13px} .h2h tbody th{width:6em} }
+
   /* バッジ */
   .b{display:inline-block;font-size:13px;line-height:1.3;padding:3px 8px;border:1px solid var(--line);background:var(--paper);border-radius:2px;margin:0 6px 4px 0;white-space:nowrap}
   .b.walk{border-color:var(--walk);color:var(--walk);background:var(--walk-bg);font-weight:600}
@@ -143,9 +153,9 @@
 
   /* 表示切替 */
   @media (max-width:899px){ [data-view="auto"] .tbl{display:none} }
-  @media (min-width:900px){ [data-view="auto"] .cards{display:none} }
+  @media (min-width:900px){ [data-view="auto"] .cards:not(.two){display:none} }
   [data-view="cards"] .tbl{display:none}
-  [data-view="table"] .cards{display:none}
+  [data-view="table"] .cards:not(.two){display:none}
 
   /* 備考 */
   .notes{background:var(--paper);border:1px solid var(--line);padding:12px 16px;font-size:14px}
@@ -198,12 +208,19 @@
   <div class="scroll"><table class="mat" id="matrix"></table></div>
   <p class="small muted" id="matrix-note"></p>
 
-  <h2><span class="n">2</span>宿比較：どの宿にするか</h2>
+  <h2><span class="n">2</span>宿比較：候補2件（10/8〜10 空室あり）</h2>
+  <p class="small muted" id="cand-note"></p>
   <div class="legend">
     <span><i class="lw"></i>徒歩圏・空室あり</span>
     <span><i class="ln"></i>10/8〜10 予約不可</span>
-    <span><i class="le"></i>黄色は各自のAirbnb画面を見て入力（この端末に保存されます）</span>
+    <span><i class="le"></i>黄色はメモ欄（この端末に保存されます）</span>
   </div>
+  <div class="scroll"><table class="h2h" id="h2h"></table></div>
+  <p class="small muted" id="h2h-note"></p>
+  <div id="candidates"></div>
+
+  <h3 style="margin:36px 0 8px">参考：当初の候補7件（お気に入り「東大門, 韓国 2026」・④のみ空室あり）</h3>
+  <p class="small muted">④弘大は空室あり（¥73,518）だが、候補2件より高く弘大は東大門から遠い。他6件は予約不可のためグレーで折りたたみ。</p>
   <div class="bar">
     <span>表示：</span>
     <button type="button" data-setview="auto">自動</button>
@@ -212,16 +229,9 @@
     <span class="sp"></span>
     <button type="button" id="reset">入力をリセット</button>
   </div>
-
-  <h3 style="margin:16px 0 8px">元の候補 7件（お気に入り「東大門, 韓国 2026」）</h3>
-  <p class="small muted">空室があるのは④のみ。他6件は予約不可のためグレーで折りたたんでいます。</p>
   <div id="stays"></div>
-
-  <h3 style="margin:28px 0 8px" id="cand-title"></h3>
-  <p class="small muted" id="cand-note"></p>
-  <p class="small muted" id="cand-excluded"></p>
-  <div id="candidates"></div>
   <p class="small muted" id="stays-note"></p>
+  <p class="small muted" id="cand-excluded"></p>
 
   <h2><span class="n">3</span>備考</h2>
   <div class="notes"><ul id="notes"></ul></div>
@@ -233,10 +243,10 @@
 const DATA = {
   asOf: "2026/9/28",
   dates: "10/8〜10",
-  now: "10/8〜10に空室があるのは3件だけ：④弘大の一軒家（¥73,518・ベッド6）、H 論峴駅5分の一軒家（¥54,796・ベッド4・江南）、I Travelus明洞のホテル客室（¥79,722・ベッド2・忠武路）。東大門徒歩圏の候補A〜Gはすべて予約不可。",
+  now: "候補は2件：H 論峴駅5分の一軒家（¥54,796・江南・クイーン4）か、I Travelus明洞のホテル客室（¥79,722・忠武路・クイーン2）。安さならH、東大門・明洞の近さならI。",
   decide: [
-    { t: "エリアを選ぶ", d: "東大門徒歩圏は全滅。夜遊び重視なら弘大（④）、東大門・明洞に近さ重視なら忠武路（I）、安さなら江南（H）" },
-    { t: "宿を決める", d: "④・H・Iの3件を、料金（¥73,518／¥54,796／¥79,722）・ベッド数（6／4／2）・夜遊び先までの距離で比べて1件に絞る" },
+    { t: "エリアを選ぶ", d: "江南で遊ぶならH。東大門・明洞で遊んで歩いて帰るならI（忠武路駅は東大門歴史文化公園駅・明洞駅の隣駅）" },
+    { t: "宿を決める", d: "Iはクイーン2台に5名なので寝方を先に相談。Hはレビュー1件で実績が薄い。差額は2泊で約25,000円（1人約5,000円）" },
     { t: "決まったら予約", d: "10/9はハングルの日（祝日）で混雑見込み。早めに" }
   ],
 
@@ -329,23 +339,38 @@ const DATA = {
   ],
   staysNote: "移動時間は最寄り駅から各エリア中心駅までの地下鉄目安（分・乗り換え込み）。料金はAirbnbのログイン画面でのみ表示されるため未記入。人数追加料金（③など）は合計に含めて比較すること。",
 
-  candTitle: "追加候補：10/8〜10に空室あり 2件（お気に入りリストで料金表示あり）",
-  candNote: "お気に入り「東大門, 韓国 2026」で10/8〜10の料金が表示された2件。料金は表示額、条件は掲載ページの記載（9/28取得）。",
+  candTitle: "候補2件",
+  candNote: "お気に入り「東大門, 韓国 2026」で10/8〜10に予約できるのはこの2件。料金は9/28のAirbnb表示額、条件は掲載ページの記載。東大門徒歩圏の候補はすべて予約不可だった。",
+  h2hNote: "移動時間はエリア間マトリクスの目安（分）。H は江南発、I は明洞発の値を流用しているため参考値。",
+  h2h: [
+    { k:"2泊合計（表示額）", H:"¥54,796", I:"¥79,722" },
+    { k:"1人あたり（5名）", H:"約11,000円", I:"約15,900円" },
+    { k:"タイプ", H:"一軒家（2LDK）", I:"ホテル客室（ファミリーツイン）" },
+    { k:"エリア／最寄駅", H:"江南（瑞草区）／新論峴駅・論峴駅 徒歩5分", I:"明洞・忠武路（中区）／忠武路駅 徒歩2分" },
+    { k:"東大門まで", H:"目安35分（江南発）", I:"4号線で1駅（東大門歴史文化公園駅）", walkI:true },
+    { k:"明洞まで", H:"目安30分（江南発）", I:"4号線で1駅（明洞駅）。掲載では徒歩で観光可", walkI:true },
+    { k:"空港まで", H:"目安75分（江南発）。空港バス停が近い", I:"目安60分（明洞発）" },
+    { k:"寝室／ベッド", H:"寝室2／クイーン4（各寝室2台）", I:"寝室2／クイーン2（各寝室1台）" },
+    { k:"5名の寝方", H:"2+2+1で収まる", I:"2台に5名。相談が必要" },
+    { k:"バス／定員", H:"バス1／最大8名", I:"バス1／最大5名" },
+    { k:"評価", H:"新着（レビュー1件）", I:"★4.77（26件）" },
+    { k:"夜遊びの向き", H:"江南のクラブ・バー向け。東大門・明洞へは遠い", I:"東大門の深夜メシ・買い物、明洞の食べ歩き向け" }
+  ],
   candExcluded: "除外（9/28 Airbnbで確認）：東大門徒歩圏の追加候補A〜Gはすべて10/8〜10に予約不可（B DDP徒歩3分は最低4泊、他は満室）。A 東大門駅3分の一軒家／B DDP徒歩3分・大きなリビング／C DDP駅5分・クイーンベッド3台／D DDP徒歩4分・3部屋3ベッド／E Sunsun Mansion／F leejae 3ベッドルーム／G PARK Poru モダン韓屋",
   candDistLabel: "東大門まで",
   candidates: [
-    { no:"H", id:"1772870260196521286", name:"[NEW] 新論峴・論峴駅から徒歩5分 | 2LDK 4ベッド | 最大8名様 | 無料荷物預かり | OTT（一軒家・瑞草区）",
+    { no:"H", id:"1772870260196521286", short:"論峴駅5分の一軒家（江南）", name:"[NEW] 新論峴・論峴駅から徒歩5分 | 2LDK 4ベッド | 最大8名様 | 無料荷物預かり | OTT（一軒家・瑞草区）",
       img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1772870260196521286/original/5faf47fd-19ba-42b2-9baa-82cc1f95c2cf.jpeg?im_w=720",
       spec:"寝室2／ベッド4（クイーン4：各寝室2台）／バス1／最大8名", spec2:"新論峴駅・論峴駅 いずれも徒歩5分（江南エリア）。空港バス停・高速バスターミナルが近い",
       rating:"新着（レビュー1件・評価は3件以降に表示）", dist:"江南エリア。東大門まではエリア表の目安で35分", beds:4, baths:1,
       avail:true, price:"¥54,796（2泊）", priceSrc:"9/28 Airbnb表示・1人あたり約11,000円",
-      memo:[ "空室ありの3件で最安", "クイーン4台で5名は2+2+1で収まる。バスは1つ", "江南なので東大門・明洞の夜遊びからは遠い。江南で遊ぶなら○", "レビュー1件のみで実績は不明" ] },
-    { no:"I", id:"1670060380779850526", name:"[ホテル]Travelus明洞 #忠武路駅徒歩2分 #駐車場・荷物預かり・清掃無料 #ファミリーツイン（ホテル客室・中区）",
+      memo:[ "候補2件では安い方", "クイーン4台で5名は2+2+1で収まる。バスは1つ", "江南なので東大門・明洞の夜遊びからは遠い。江南で遊ぶなら○", "レビュー1件のみで実績は不明" ] },
+    { no:"I", id:"1670060380779850526", short:"Travelus明洞 ホテル客室（忠武路）", name:"[ホテル]Travelus明洞 #忠武路駅徒歩2分 #駐車場・荷物預かり・清掃無料 #ファミリーツイン（ホテル客室・中区）",
       img:"https://a0.muscache.com/im/pictures/hosting/Hosting-1670060380779850526/original/eeef1b6b-e670-425c-9418-5e101396c041.png?im_w=720",
       spec:"寝室2／ベッド2（クイーン：各寝室1台）／バス1／最大5名", spec2:"忠武路駅 徒歩2分（3・4号線）。4号線で東大門歴史文化公園駅・明洞駅のどちらも隣駅",
       rating:"★4.77（26件）", dist:"忠武路駅から東大門歴史文化公園駅まで4号線1駅", beds:2, baths:1,
       avail:true, price:"¥79,722（2泊）", priceSrc:"9/28 Airbnb表示・1人あたり約15,900円",
-      memo:[ "東大門と明洞の中間で、夜遊びの立地は3件で最良", "最大5名だがクイーンベッド2台。5名だと1台に2〜3人（エキストラベッドの有無は要確認）", "新築ホテル客室・清掃付き。チェックイン16:00／チェックアウト11:00" ] }
+      memo:[ "東大門と明洞の中間で、夜遊びの立地は候補2件で最良", "最大5名だがクイーンベッド2台。5名だと1台に2〜3人（エキストラベッドの有無は要確認）", "新築ホテル客室・清掃付き。チェックイン16:00／チェックアウト11:00" ] }
   ],
 
   notes: [
@@ -353,7 +378,8 @@ const DATA = {
     "移動時間はすべて地下鉄の目安（分・乗り換え込み）。深夜はタクシーが現実的で、東大門⇔弘大・江南は約20〜25分・2〜3千円程度。地下鉄終電は0時前後。",
     "宿選びの基準：東大門歴史文化公園駅から徒歩10分（約700m）以内、5名分のベッド、できればバスルーム複数。",
     "「要確認」は掲載情報からは読み取れなかった項目。推測で埋めていません。",
-    "空室状況と料金（④ ¥73,518、H ¥54,796、I ¥79,722）、A〜Gの予約不可は2026/9/28時点のAirbnb表示。予約前に再確認してください。"
+    "候補H・Iの空室と料金（¥54,796／¥79,722）、④の空室と料金¥73,518、A〜Gの予約不可は2026/9/28時点のAirbnb表示。予約前に再確認してください。",
+    "候補H・Iの料金が5名分か（人数追加料金の有無）は予約画面で要確認。"
   ]
 };
 
@@ -456,6 +482,7 @@ function renderStays(){
 }
 
 /* ===== 追加候補（空室あり） ===== */
+const candShort = c => `<a href="${roomUrl(c.id)}" target="_blank" rel="noopener">${esc(c.no)} ${esc(c.short || c.name)}</a>`;
 const candName = c => c.id ? `<a href="${roomUrl(c.id)}" target="_blank" rel="noopener">${esc(c.no)}. ${esc(c.name)}</a>` : `${esc(c.no)}. ${esc(c.name)}`;
 const candStatus = c => c.avail ? `<span class="status ok">${DATA.dates} 空室あり</span>` : "";
 const candPrice = c => c.price ? `<div class="fld"><label>2泊合計料金（表示額）</label><div style="font-size:18px;font-weight:700">${esc(c.price)}</div><div class="cap">${esc(c.priceSrc||"")}</div></div>` : `<div class="fld"><label>2泊合計料金（5名）</label>${inputHtml("price:"+c.no, "各自のAirbnb画面で確認して入力")}</div>`;
@@ -489,15 +516,14 @@ function candRow(c){
   </tr>`;
 }
 function renderCands(){
-  document.getElementById("cand-title").textContent = DATA.candTitle;
   document.getElementById("cand-note").textContent = DATA.candNote;
   document.getElementById("cand-excluded").textContent = DATA.candExcluded || "";
-  document.getElementById("candidates").innerHTML = `
-    <div class="cards">${DATA.candidates.map(candCard).join("")}</div>
-    <div class="tbl scroll"><table class="stays">
-      <thead><tr><th>宿名／条件（掲載情報より）</th><th>評価</th><th>${DATA.candDistLabel.replace("／","<br>／")}</th><th>5名分の<br>ベッド／バス</th><th>2泊合計料金<br>／メモ欄</th><th>特徴</th></tr></thead>
-      <tbody>${DATA.candidates.map(candRow).join("")}</tbody>
-    </table></div>`;
+  document.getElementById("h2h-note").textContent = DATA.h2hNote || "";
+  const H = DATA.candidates.find(c=>c.no==="H"), I = DATA.candidates.find(c=>c.no==="I");
+  document.getElementById("h2h").innerHTML =
+    `<thead><tr><th></th><th>${candShort(H)}</th><th>${candShort(I)}</th></tr></thead><tbody>` +
+    DATA.h2h.map(r=>`<tr><th>${esc(r.k)}</th><td class="${r.walkH?"w":""}">${esc(r.H)}</td><td class="${r.walkI?"w":""}">${esc(r.I)}</td></tr>`).join("") + `</tbody>`;
+  document.getElementById("candidates").innerHTML = `<div class="cards two">${DATA.candidates.map(candCard).join("")}</div>`;
 }
 document.getElementById("stays-note").textContent = DATA.staysNote;
 document.getElementById("notes").innerHTML = DATA.notes.map(n=>`<li>${esc(n)}</li>`).join("");
