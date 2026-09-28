@@ -219,6 +219,7 @@
 
   <h3 style="margin:28px 0 8px" id="cand-title"></h3>
   <p class="small muted" id="cand-note"></p>
+  <p class="small muted" id="cand-excluded"></p>
   <div id="candidates"></div>
   <p class="small muted" id="stays-note"></p>
 
@@ -232,10 +233,10 @@
 const DATA = {
   asOf: "2026/9/28",
   dates: "10/8〜10",
-  now: "現時点で10/8〜10の空室が確認できているのは④弘大（¥73,518）だけ。東大門にこだわるなら、A〜Gの空室確認が先。",
+  now: "現時点で10/8〜10の空室が確認できているのは④弘大（¥73,518）だけ。東大門の追加候補はA・C・Dが予約不可で、残るのはB（最低4泊表示）・E・F・G。東大門にこだわるなら、この4件の空室確認が先。",
   decide: [
-    { t: "まず選ぶ", d: "空室が確実な④弘大（¥73,518）で決めるか、東大門にこだわって追加候補A〜Gの空室を確認するか" },
-    { t: "東大門なら", d: "A〜Gのリンクを開いて空室と料金を黄色セルに記入し、ベッド数・バスルーム数を見て1件に絞る" },
+    { t: "まず選ぶ", d: "空室が確実な④弘大（¥73,518）で決めるか、東大門にこだわって残りの追加候補（B・E・F・G）の空室を確認するか" },
+    { t: "東大門なら", d: "B・E・F・Gのリンクを開いて空室と料金を黄色セルに記入し、ベッド数・バスルーム数を見て1件に絞る" },
     { t: "決まったら予約", d: "10/9はハングルの日（祝日）で混雑見込み。早めに" }
   ],
 
@@ -328,22 +329,14 @@ const DATA = {
   ],
   staysNote: "移動時間は最寄り駅から各エリア中心駅までの地下鉄目安（分・乗り換え込み）。料金はAirbnbのログイン画面でのみ表示されるため未記入。人数追加料金（③など）は合計に含めて比較すること。",
 
-  candTitle: "追加候補 A〜G：東大門徒歩圏（10/8〜10の空室・料金は各自Airbnbで要確認）",
+  candTitle: "追加候補 B・E・F・G：東大門徒歩圏（10/8〜10の空室・料金は各自Airbnbで要確認）",
   candNote: "Airbnbの東大門周辺リストから、5名で泊まれそうな一軒家・アパートを抜粋。空室と料金はログイン画面でしか確認できないため、リンクを開いて黄色セルに記入してください。",
+  candExcluded: "10/8〜10 予約不可のため除外（9/28 Airbnbで確認）：A 東大門駅3分の一軒家（鍾路区）・C DDP駅5分・クイーンベッド3台の一軒家（中区）・D DDP徒歩4分・3部屋3ベッド（中区）",
   candDistLabel: "東大門歴史文化公園駅／DDPまで",
   candidates: [
-    { no:"A", id:"1607715435564032120", name:"東大門駅3分の一軒家（鍾路区）", spec:"最大7名（基準6名）／寝室2／ベッド3／バス1.5／エレベーター有", spec2:"DDP・広蔵市場・タッカンマリ横丁が近い、玄関前にバス停",
-      rating:"★5.0（54件）", dist:"徒歩10分程度", beds:3, baths:1.5,
-      memo:[ "バスルーム1.5で5名でも回しやすい", "ジャグジー付きとの掲載あり" ] },
-    { no:"B", id:"1460838765860189584", name:"DDP徒歩3分・大きなリビング（中区）", spec:"最大7名／65インチTV／アパート", spec2:"",
-      rating:"★5.0（41件）", dist:"徒歩3分", beds:null, baths:null,
-      memo:[ "夜遊び拠点としては最も近い", "寝室・ベッド数はリンク先で要確認" ] },
-    { no:"C", id:"1344207993881509342", name:"DDP駅5分・クイーンベッド3台の一軒家（中区）", spec:"クイーンベッド3台／浄水器／エアコン", spec2:"",
-      rating:"★4.91（114件）", dist:"徒歩5分", beds:3, baths:null,
-      memo:[ "レビュー114件で安定", "クイーン3台なら5名は2+2+1で収まる" ] },
-    { no:"D", id:"1294718324466695909", name:"DDP徒歩4分・3部屋3ベッド（中区）", spec:"寝室3／ベッド3／アパート", spec2:"",
-      rating:"★4.96（78件）", dist:"徒歩4分", beds:3, baths:null,
-      memo:[ "3部屋に分かれるのでプライバシー確保しやすい" ] },
+    { no:"B", id:"1460838765860189584", name:"DDP徒歩3分・大きなリビング（中区）", spec:"最大7名／ベッド4／65インチTV／アパート", spec2:"最低4泊（9/28 Airbnb表示）",
+      rating:"★5.0（41件）", dist:"徒歩3分", beds:4, baths:null, minStay:"最低4泊",
+      memo:[ "夜遊び拠点としては最も近い", "最低4泊のため、10/8〜10（2泊）で予約できるかは要確認", "寝室・バス数はリンク先で要確認" ] },
     { no:"E", id:"1522451194497231726", name:"Sunsun Mansion（中区）", spec:"東大門歴史文化公園駅 徒歩1分／エレベーター／駐車場", spec2:"",
       rating:"★4.92（50件）", dist:"徒歩1分", beds:null, baths:null,
       memo:[ "駅直近でエレベーター有。深夜帰宅が楽", "定員はリンク先で要確認" ] },
@@ -360,7 +353,7 @@ const DATA = {
     "移動時間はすべて地下鉄の目安（分・乗り換え込み）。深夜はタクシーが現実的で、東大門⇔弘大・江南は約20〜25分・2〜3千円程度。地下鉄終電は0時前後。",
     "宿選びの基準：東大門歴史文化公園駅から徒歩10分（約700m）以内、5名分のベッド、できればバスルーム複数。",
     "「要確認」は掲載情報からは読み取れなかった項目。推測で埋めていません。",
-    "元の7件の空室状況（④のみ空室あり）と④の料金¥73,518は2026/9/28時点の表示。予約前に再確認してください。"
+    "元の7件の空室状況（④のみ空室あり）、④の料金¥73,518、追加候補A・C・Dの予約不可とBの最低4泊は2026/9/28時点のAirbnb表示。予約前に再確認してください。"
   ]
 };
 
@@ -471,7 +464,7 @@ function candCard(c){
       <div class="rate">${esc(c.rating)}</div>
       <div class="spec">${esc(c.spec)}${c.spec2 ? "<br>" + esc(c.spec2) : ""}</div>
     </div></div>
-    <div class="badges"><span class="${dcls}">${esc(DATA.candDistLabel)} ${esc(c.dist)}</span>${fitBadge(c.beds, c.baths)}</div>
+    <div class="badges"><span class="${dcls}">${esc(DATA.candDistLabel)} ${esc(c.dist)}</span>${c.minStay ? `<span class="b chk">${esc(c.minStay)}</span>` : ""}${fitBadge(c.beds, c.baths)}</div>
     <div class="fld"><label>${DATA.dates} 空室</label>${inputHtml("vac:"+c.id, "あり／なし を入力")}</div>
     <div class="fld"><label>2泊合計料金（5名）</label>${inputHtml("price:"+c.id, "各自のAirbnb画面で確認して入力")}</div>
     ${list(c.memo, [])}
@@ -483,7 +476,7 @@ function candRow(c){
     <td class="name"><a href="${roomUrl(c.id)}" target="_blank" rel="noopener">${esc(c.no)}. ${esc(c.name)}</a><small>${esc(c.spec)}${c.spec2 ? "<br>" + esc(c.spec2) : ""}</small></td>
     <td class="c">${esc(c.rating)}</td>
     <td class="${dcls}">${esc(c.dist)}</td>
-    <td class="fit">${fitBadge(c.beds, c.baths)}</td>
+    <td class="fit">${c.minStay ? `<span class="b chk">${esc(c.minStay)}</span>` : ""}${fitBadge(c.beds, c.baths)}</td>
     <td>${inputHtml("vac:"+c.id, "要入力")}</td>
     <td>${inputHtml("price:"+c.id, "要入力")}</td>
     <td class="pros">${list(c.memo, [])}</td>
@@ -492,6 +485,7 @@ function candRow(c){
 function renderCands(){
   document.getElementById("cand-title").textContent = DATA.candTitle;
   document.getElementById("cand-note").textContent = DATA.candNote;
+  document.getElementById("cand-excluded").textContent = DATA.candExcluded || "";
   document.getElementById("candidates").innerHTML = `
     <div class="cards">${DATA.candidates.map(candCard).join("")}</div>
     <div class="tbl scroll"><table class="stays">
